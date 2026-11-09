@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Client/">
+    <Project Path="Client/BlazorWebWorkerIgniteUIRepro.Client.csproj" />
+  </Folder>
+  <Folder Name="/Worker/">
+    <Project Path="Worker/BlazorWebWorkerIgniteUIRepro.Worker.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,49 @@
+﻿@page "/"
+
+@using BlazorWebWorkerIgniteUIRepro.Worker
+@using IgniteUI.Blazor.Controls
+@using System.Runtime.Versioning
+@attribute [SupportedOSPlatform("browser")]
+@inject IJSRuntime JS
+@inject ILogger<Home> Logger
+@implements IAsyncDisposable
+
+<PageTitle>Ignite UI worker initializer repro</PageTitle>
+
+<h1>Ignite UI worker initializer repro</h1>
+<p>Ignite UI Blazor Lite is referenced only by the client. The worker uses the unmodified .NET 11 template.</p>
+<IgbCombo TValue="string" TItem="Product" Data="@products" ValueKey="Id" DisplayKey="Name"
+          SingleSelect="true" Label="Product" Placeholder="Select a product" />
+<p id="worker-status">@status</p>
+<p>Open the browser console to see the worker's <code>document is not defined</code> initializer warning.
+    The worker can still return its greeting.</p>
+
+@code {
+    private readonly Product[] products = [new("dock", "USB-C Dock"), new("display", "Monitor")];
+    private WebWorkerClient? worker;
+    private string status = "Starting the unmodified template worker...";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            worker = await WebWorkerClient.CreateAsync(JS);
+            status = await worker.InvokeAsync<string>(
+                "BlazorWebWorkerIgniteUIRepro.Worker.WorkerMethods.Greet", ["World"]);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or JSException)
+        {
+            Logger.LogError(exception, "Worker startup failed.");
+            status = exception.Message;
+        }
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (worker is not null) await worker.DisposeAsync();
+    }
+
+    public sealed record Product(string Id, string Name);
+}
